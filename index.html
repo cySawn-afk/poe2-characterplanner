@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gear Ledger — PoE2 Equipment Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0a07;
+  --panel: #17120c;
+  --panel2: #1f1810;
+  --line: #3a2e1d;
+  --gold: #c9a35f;
+  --gold-bright: #e8c87e;
+  --ink: #e6d9bf;
+  --dim: #8f7f60;
+  --fire: #d4593a;
+  --cold: #5f9bc4;
+  --light: #d9b73e;
+  --chaos: #9a5fae;
+  --str: #c1614b;
+  --dex: #7da35f;
+  --int: #6f8fc4;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 500px at 50% -100px, #241a0e 0%, transparent 60%),
+    var(--bg);
+  color: var(--ink);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 17px;
+  padding: 28px 20px 80px;
+}
+.masthead { text-align: center; max-width: 1100px; margin: 0 auto 30px; }
+.masthead h1 {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: clamp(30px, 5vw, 44px);
+  letter-spacing: 0.12em;
+  margin: 14px 0 4px;
+  color: var(--gold-bright);
+  text-shadow: 0 0 26px rgba(201,163,95,0.25);
+}
+.sub { margin: 0 0 14px; color: var(--dim); letter-spacing: 0.18em; text-transform: uppercase; font-size: 12px; }
+.rule { height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0.6; }
+.save-state { text-align: center; color: var(--dim); font-style: italic; font-size: 13.5px; margin: 8px 0 0; }
+
+.columns { display: grid; grid-template-columns: 1fr 420px; gap: 28px; max-width: 1100px; margin: 0 auto; align-items: start; }
+@media (max-width: 920px) { .columns { grid-template-columns: 1fr; } .totals-col { order: -1; } }
+
+.col-title {
+  font-family: 'Cinzel', serif; font-size: 15px; font-weight: 700;
+  letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold);
+  margin: 0 0 14px;
+}
+
+/* ----- Slots ----- */
+.slot { border: 1px solid var(--line); background: var(--panel); margin-bottom: 8px; }
+.slot.open { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(201,163,95,0.18), 0 6px 18px rgba(0,0,0,0.45); }
+.slot-head {
+  width: 100%; display: flex; align-items: baseline; gap: 12px;
+  background: none; border: 0; color: var(--ink); cursor: pointer;
+  padding: 12px 14px; font: inherit; text-align: left;
+}
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 1px; }
+.slot-name { font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 0.08em; }
+.slot-meta { color: var(--dim); font-style: italic; font-size: 14px; }
+.chev { margin-left: auto; color: var(--gold); font-size: 18px; line-height: 1; }
+
+.slot-body { padding: 4px 14px 14px; border-top: 1px solid var(--line); }
+.mod-row { display: grid; grid-template-columns: 1fr 110px 30px; gap: 8px; margin-top: 10px; align-items: center; }
+select, input {
+  background: var(--panel2); border: 1px solid var(--line); color: var(--ink);
+  font: inherit; font-size: 15px; padding: 7px 9px; width: 100%;
+}
+.val-wrap { position: relative; }
+.val-wrap input { padding-right: 26px; }
+.suffix { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); color: var(--dim); pointer-events: none; }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+.icon-btn {
+  background: none; border: 1px solid transparent; color: var(--dim);
+  cursor: pointer; font-size: 13px; padding: 6px 0;
+}
+.icon-btn:hover { color: var(--fire); }
+.slot-actions { display: flex; gap: 14px; margin-top: 12px; }
+.ghost {
+  background: none; border: 0; color: var(--gold); font: inherit; font-size: 15px;
+  cursor: pointer; padding: 0; letter-spacing: 0.02em;
+}
+.ghost:hover { color: var(--gold-bright); text-decoration: underline; }
+.ghost.dim { color: var(--dim); }
+
+/* ----- Weapon groups ----- */
+.weapon-group { border-left: 2px solid var(--line); padding-left: 12px; margin: 18px 0 8px; }
+.weapon-group.active { border-left-color: var(--gold); }
+.weapon-group-head {
+  display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px;
+  font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim);
+}
+.weapon-group.active .weapon-group-head { color: var(--gold); }
+.wnum { font-size: 17px; }
+.active-tag { font-family: 'EB Garamond', serif; text-transform: none; letter-spacing: 0; font-style: italic; font-size: 14px; color: var(--gold-bright); }
+
+/* ----- Totals panel ----- */
+.totals-panel {
+  position: sticky; top: 16px;
+  border: 1px solid var(--gold); background: var(--panel);
+  padding: 18px 18px 16px;
+  box-shadow: 0 0 0 4px var(--panel), 0 0 0 5px var(--line), 0 14px 34px rgba(0,0,0,0.5);
+}
+.set-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 18px; }
+.set-toggle button {
+  font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.14em;
+  background: var(--panel2); color: var(--dim); border: 1px solid var(--line);
+  padding: 8px 0; cursor: pointer;
+}
+.set-toggle button.on { color: #1a1206; background: var(--gold); border-color: var(--gold-bright); font-weight: 700; }
+
+.sect {
+  font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--dim);
+  margin: 20px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--line);
+}
+.attr-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.attr { text-align: center; padding: 10px 0 8px; background: var(--panel2); border: 1px solid var(--line); border-top: 2px solid var(--dim); }
+.attr.str { border-top-color: var(--str); }
+.attr.dex { border-top-color: var(--dex); }
+.attr.int { border-top-color: var(--int); }
+.attr-val { display: block; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.attr-label { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.2em; color: var(--dim); }
+
+.combat-table { width: 100%; border-collapse: collapse; }
+.combat-table td { padding: 5px 0; border-bottom: 1px dotted var(--line); font-size: 16px; }
+.combat-table td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--gold-bright); white-space: nowrap; }
+.empty { color: var(--dim); font-style: italic; font-size: 15px; margin: 4px 0; }
+
+.res { margin-bottom: 12px; }
+.res-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.res-label { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+.res-num { font-variant-numeric: tabular-nums; font-size: 16px; }
+.res-num em { font-style: italic; font-size: 13px; opacity: 0.75; }
+.bar { height: 7px; background: var(--panel2); border: 1px solid var(--line); }
+.fill { height: 100%; transition: width 240ms ease; }
+@media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+.res.fire .res-label, .res.fire .res-num { color: var(--fire); }
+.res.cold .res-label, .res.cold .res-num { color: var(--cold); }
+.res.light .res-label, .res.light .res-num { color: var(--light); }
+.res.chaos .res-label, .res.chaos .res-num { color: var(--chaos); }
+.res.fire .fill { background: linear-gradient(90deg, #6e2413, var(--fire)); }
+.res.cold .fill { background: linear-gradient(90deg, #24465e, var(--cold)); }
+.res.light .fill { background: linear-gradient(90deg, #6e5c14, var(--light)); }
+.res.chaos .fill { background: linear-gradient(90deg, #46264f, var(--chaos)); }
+
+.cap-note { color: var(--dim); font-size: 13.5px; font-style: italic; margin: 10px 0 0; line-height: 1.4; }
+.panel-actions { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); display: flex; gap: 16px; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="rule"></div>
+  <h1>Gear Ledger</h1>
+  <p class="sub">Path of Exile II &middot; Equipment Stat Planner</p>
+  <div class="rule"></div>
+  <p class="save-state" id="saveState">Entries are saved automatically in this browser.</p>
+</header>
+
+<div class="columns">
+  <section class="gear-col">
+    <h2 class="col-title">Equipment</h2>
+    <div id="gearCol"></div>
+  </section>
+
+  <section class="totals-col">
+    <div class="totals-panel">
+      <h2 class="col-title">Character Sheet</h2>
+      <div class="set-toggle" role="group" aria-label="Active weapon set" id="setToggle">
+        <button data-set="1">Set I</button>
+        <button data-set="2">Set II</button>
+      </div>
+      <div id="totals"></div>
+      <div class="panel-actions">
+        <button class="ghost dim" id="resetAll">Reset all gear</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- Stat definitions ---------- */
+const STATS = [
+  { key: "str", label: "Strength", cat: "base", suffix: "" },
+  { key: "dex", label: "Dexterity", cat: "base", suffix: "" },
+  { key: "int", label: "Intelligence", cat: "base", suffix: "" },
+  { key: "allAttr", label: "All Attributes", cat: "base", suffix: "" },
+  { key: "life", label: "Maximum Life", cat: "combat", suffix: "" },
+  { key: "mana", label: "Maximum Mana", cat: "combat", suffix: "" },
+  { key: "spirit", label: "Spirit", cat: "combat", suffix: "" },
+  { key: "accuracy", label: "Accuracy Rating", cat: "combat", suffix: "" },
+  { key: "physDmg", label: "Increased Physical Damage", cat: "combat", suffix: "%" },
+  { key: "eleDmg", label: "Increased Elemental Damage", cat: "combat", suffix: "%" },
+  { key: "spellDmg", label: "Increased Spell Damage", cat: "combat", suffix: "%" },
+  { key: "atkSpeed", label: "Increased Attack Speed", cat: "combat", suffix: "%" },
+  { key: "castSpeed", label: "Increased Cast Speed", cat: "combat", suffix: "%" },
+  { key: "critChance", label: "Increased Critical Hit Chance", cat: "combat", suffix: "%" },
+  { key: "critBonus", label: "Increased Critical Damage Bonus", cat: "combat", suffix: "%" },
+  { key: "moveSpeed", label: "Increased Movement Speed", cat: "combat", suffix: "%" },
+  { key: "lvlAll", label: "+ Level of All Skills", cat: "combat", suffix: "" },
+  { key: "lvlMelee", label: "+ Level of Melee Skills", cat: "combat", suffix: "" },
+  { key: "lvlProj", label: "+ Level of Projectile Skills", cat: "combat", suffix: "" },
+  { key: "lvlSpell", label: "+ Level of Spell Skills", cat: "combat", suffix: "" },
+  { key: "lvlMinion", label: "+ Level of Minion Skills", cat: "combat", suffix: "" },
+  { key: "fireRes", label: "Fire Resistance", cat: "res", suffix: "%" },
+  { key: "coldRes", label: "Cold Resistance", cat: "res", suffix: "%" },
+  { key: "lightRes", label: "Lightning Resistance", cat: "res", suffix: "%" },
+  { key: "chaosRes", label: "Chaos Resistance", cat: "res", suffix: "%" },
+  { key: "allRes", label: "All Elemental Resistances", cat: "res", suffix: "%" },
+];
+const STAT_MAP = Object.fromEntries(STATS.map(s => [s.key, s]));
+
+const SHARED_SLOTS = [
+  { id: "helmet", label: "Helmet" },
+  { id: "body", label: "Body Armour" },
+  { id: "gloves", label: "Gloves" },
+  { id: "boots", label: "Boots" },
+  { id: "belt", label: "Belt" },
+  { id: "amulet", label: "Amulet" },
+  { id: "ring1", label: "Ring I" },
+  { id: "ring2", label: "Ring II" },
+];
+const SET1_SLOTS = [{ id: "main1", label: "Main Hand" }, { id: "off1", label: "Off Hand" }];
+const SET2_SLOTS = [{ id: "main2", label: "Main Hand" }, { id: "off2", label: "Off Hand" }];
+const ALL_SLOTS = [...SHARED_SLOTS, ...SET1_SLOTS, ...SET2_SLOTS];
+const RES_CAP = 75;
+const STORE_KEY = "poe2GearLedger.v1";
+
+/* ---------- State ---------- */
+let uid = 0;
+const newRow = () => ({ id: ++uid, stat: "", value: "" });
+
+let state = {
+  gear: Object.fromEntries(ALL_SLOTS.map(s => [s.id, [newRow()]])),
+  activeSet: 1,
+  openSlot: "helmet",
+};
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved && saved.gear) {
+      // Re-assign ids and keep only known slots/stats so old saves stay compatible
+      const gear = {};
+      for (const slot of ALL_SLOTS) {
+        const rows = Array.isArray(saved.gear[slot.id]) ? saved.gear[slot.id] : [];
+        gear[slot.id] = rows
+          .filter(r => r && (r.stat === "" || STAT_MAP[r.stat]))
+          .map(r => ({ id: ++uid, stat: r.stat || "", value: r.value ?? "" }));
+        if (gear[slot.id].length === 0) gear[slot.id] = [newRow()];
+      }
+      state.gear = gear;
+      state.activeSet = saved.activeSet === 2 ? 2 : 1;
+      state.openSlot = typeof saved.openSlot === "string" ? saved.openSlot : "helmet";
+    }
+  } catch (e) {
+    console.warn("Could not load saved gear:", e);
+  }
+}
+
+let saveTimer = null;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({
+        gear: state.gear,
+        activeSet: state.activeSet,
+        openSlot: state.openSlot,
+      }));
+      flashSaved();
+    } catch (e) {
+      document.getElementById("saveState").textContent =
+        "Saving is unavailable in this browser (private mode or storage blocked) — entries will be lost on close.";
+    }
+  }, 250);
+}
+
+let flashTimer = null;
+function flashSaved() {
+  const el = document.getElementById("saveState");
+  el.textContent = "Saved.";
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => {
+    el.textContent = "Entries are saved automatically in this browser.";
+  }, 1500);
+}
+
+/* ---------- Helpers ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const round = n => Math.round(n * 10) / 10;
+
+function filledCount(slotId) {
+  return state.gear[slotId].filter(r => r.stat && r.value !== "" && !isNaN(parseFloat(r.value))).length;
+}
+
+function computeTotals() {
+  const weaponIds = state.activeSet === 1 ? ["main1", "off1"] : ["main2", "off2"];
+  const activeIds = [...SHARED_SLOTS.map(s => s.id), ...weaponIds];
+  const t = Object.fromEntries(STATS.map(s => [s.key, 0]));
+  for (const id of activeIds) {
+    for (const row of state.gear[id]) {
+      const v = parseFloat(row.value);
+      if (row.stat && !isNaN(v)) t[row.stat] += v;
+    }
+  }
+  return {
+    raw: t,
+    base: { str: t.str + t.allAttr, dex: t.dex + t.allAttr, int: t.int + t.allAttr },
+    res: { fire: t.fireRes + t.allRes, cold: t.coldRes + t.allRes, light: t.lightRes + t.allRes, chaos: t.chaosRes },
+  };
+}
+
+/* ---------- Rendering: gear column ---------- */
+function statOptions(selected) {
+  const group = (label, cat) =>
+    `<optgroup label="${label}">` +
+    STATS.filter(s => s.cat === cat)
+      .map(s => `<option value="${s.key}" ${s.key === selected ? "selected" : ""}>${esc(s.label)}</option>`)
+      .join("") +
+    `</optgroup>`;
+  return `<option value="">— choose stat —</option>` +
+    group("Base Stats", "base") + group("Combat Stats", "combat") + group("Resistances", "res");
+}
+
+function slotCardHTML(slot) {
+  const open = state.openSlot === slot.id;
+  const n = filledCount(slot.id);
+  const meta = n > 0 ? `${n} mod${n > 1 ? "s" : ""}` : "empty";
+  let body = "";
+  if (open) {
+    body = `<div class="slot-body">` +
+      state.gear[slot.id].map(row => `
+        <div class="mod-row" data-row="${row.id}">
+          <select aria-label="Stat type" data-act="stat">${statOptions(row.stat)}</select>
+          <div class="val-wrap">
+            <input type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Stat value" data-act="value" value="${esc(row.value)}">
+            <span class="suffix">${row.stat ? STAT_MAP[row.stat].suffix : ""}</span>
+          </div>
+          <button class="icon-btn" title="Remove modifier" data-act="remove">✕</button>
+        </div>`).join("") +
+      `<div class="slot-actions">
+        <button class="ghost" data-act="add">+ Add modifier</button>
+        <button class="ghost dim" data-act="clear">Clear slot</button>
+      </div></div>`;
+  }
+  return `<div class="slot ${open ? "open" : ""}" data-slot="${slot.id}">
+    <button class="slot-head" data-act="toggle" aria-expanded="${open}">
+      <span class="slot-name">${esc(slot.label)}</span>
+      <span class="slot-meta">${meta}</span>
+      <span class="chev">${open ? "−" : "+"}</span>
+    </button>${body}</div>`;
+}
+
+function renderGear() {
+  const sets = [
+    { n: 1, roman: "I", slots: SET1_SLOTS },
+    { n: 2, roman: "II", slots: SET2_SLOTS },
+  ];
+  document.getElementById("gearCol").innerHTML =
+    SHARED_SLOTS.map(slotCardHTML).join("") +
+    sets.map(set => `
+      <div class="weapon-group ${state.activeSet === set.n ? "active" : ""}">
+        <div class="weapon-group-head">
+          <span class="wnum">${set.roman}</span><span>Weapon Set ${set.roman}</span>
+          ${state.activeSet === set.n ? '<span class="active-tag">counted in totals</span>' : ""}
+        </div>
+        ${set.slots.map(slotCardHTML).join("")}
+      </div>`).join("");
+}
+
+/* ---------- Rendering: totals ---------- */
+function resBarHTML(label, tone, value) {
+  const over = value - RES_CAP;
+  const pct = Math.max(0, Math.min(100, (Math.min(value, RES_CAP) / RES_CAP) * 100));
+  const note = over > 0
+    ? `<em> (+${round(over)} over)</em>`
+    : `<em> (${round(RES_CAP - value)} to cap)</em>`;
+  return `<div class="res ${tone}">
+    <div class="res-top">
+      <span class="res-label">${label}</span>
+      <span class="res-num">${round(Math.min(value, RES_CAP))}%${note}</span>
+    </div>
+    <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
+function renderTotals() {
+  const t = computeTotals();
+  const combatRows = STATS.filter(s => s.cat === "combat" && t.raw[s.key] !== 0);
+  const combat = combatRows.length === 0
+    ? `<p class="empty">No combat stats entered yet. Add modifiers to your gear and they will be tallied here.</p>`
+    : `<table class="combat-table"><tbody>` +
+      combatRows.map(s =>
+        `<tr><td>${esc(s.label)}</td><td class="num">${s.key.startsWith("lvl") ? "+" : ""}${round(t.raw[s.key])}${s.suffix}</td></tr>`
+      ).join("") + `</tbody></table>`;
+
+  document.getElementById("totals").innerHTML = `
+    <h3 class="sect">Base Stats</h3>
+    <div class="attr-row">
+      <div class="attr str"><span class="attr-val">${round(t.base.str)}</span><span class="attr-label">STR</span></div>
+      <div class="attr dex"><span class="attr-val">${round(t.base.dex)}</span><span class="attr-label">DEX</span></div>
+      <div class="attr int"><span class="attr-val">${round(t.base.int)}</span><span class="attr-label">INT</span></div>
+    </div>
+    <h3 class="sect">Combat Stats</h3>${combat}
+    <h3 class="sect">Resistances</h3>
+    ${resBarHTML("Fire", "fire", t.res.fire)}
+    ${resBarHTML("Cold", "cold", t.res.cold)}
+    ${resBarHTML("Lightning", "light", t.res.light)}
+    ${resBarHTML("Chaos", "chaos", t.res.chaos)}
+    <p class="cap-note">Cap shown at ${RES_CAP}%. Anything beyond is overcap — a buffer against curses and exposure, not extra mitigation.</p>`;
+
+  document.querySelectorAll("#setToggle button").forEach(b =>
+    b.classList.toggle("on", Number(b.dataset.set) === state.activeSet));
+}
+
+/* ---------- Events ---------- */
+const gearCol = document.getElementById("gearCol");
+
+gearCol.addEventListener("click", e => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  const act = btn.dataset.act;
+  if (act === "stat" || act === "value") return; // handled on input/change
+  const slotEl = btn.closest("[data-slot]");
+  const slotId = slotEl.dataset.slot;
+  const rowEl = btn.closest("[data-row]");
+
+  if (act === "toggle") {
+    state.openSlot = state.openSlot === slotId ? null : slotId;
+  } else if (act === "add") {
+    state.gear[slotId].push(newRow());
+  } else if (act === "clear") {
+    state.gear[slotId] = [newRow()];
+  } else if (act === "remove") {
+    const rid = Number(rowEl.dataset.row);
+    const rows = state.gear[slotId].filter(r => r.id !== rid);
+    state.gear[slotId] = rows.length ? rows : [newRow()];
+  }
+  save();
+  renderGear();
+  renderTotals();
+});
+
+// Value typing: update state and totals without re-rendering inputs (keeps focus)
+gearCol.addEventListener("input", e => {
+  const el = e.target.closest("[data-act='value']");
+  if (!el) return;
+  const slotId = el.closest("[data-slot]").dataset.slot;
+  const rid = Number(el.closest("[data-row]").dataset.row);
+  const row = state.gear[slotId].find(r => r.id === rid);
+  if (row) { row.value = el.value; save(); renderTotals(); updateMeta(slotId); }
+});
+
+// Stat selection: update state, suffix, totals
+gearCol.addEventListener("change", e => {
+  const el = e.target.closest("[data-act='stat']");
+  if (!el) return;
+  const slotId = el.closest("[data-slot]").dataset.slot;
+  const rowEl = el.closest("[data-row]");
+  const rid = Number(rowEl.dataset.row);
+  const row = state.gear[slotId].find(r => r.id === rid);
+  if (row) {
+    row.stat = el.value;
+    rowEl.querySelector(".suffix").textContent = row.stat ? STAT_MAP[row.stat].suffix : "";
+    save(); renderTotals(); updateMeta(slotId);
+  }
+});
+
+function updateMeta(slotId) {
+  const slotEl = gearCol.querySelector(`[data-slot='${slotId}']`);
+  if (!slotEl) return;
+  const n = filledCount(slotId);
+  slotEl.querySelector(".slot-meta").textContent = n > 0 ? `${n} mod${n > 1 ? "s" : ""}` : "empty";
+}
+
+document.getElementById("setToggle").addEventListener("click", e => {
+  const btn = e.target.closest("button[data-set]");
+  if (!btn) return;
+  state.activeSet = Number(btn.dataset.set);
+  save();
+  renderGear();
+  renderTotals();
+});
+
+document.getElementById("resetAll").addEventListener("click", () => {
+  if (!confirm("Reset all gear entries? This cannot be undone.")) return;
+  state.gear = Object.fromEntries(ALL_SLOTS.map(s => [s.id, [newRow()]]));
+  save();
+  renderGear();
+  renderTotals();
+});
+
+/* ---------- Init ---------- */
+load();
+renderGear();
+renderTotals();
+</script>
+</body>
+</html>
