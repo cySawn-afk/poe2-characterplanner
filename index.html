@@ -23,6 +23,7 @@
   --str: #c1614b;
   --dex: #7da35f;
   --int: #6f8fc4;
+  --danger: #c84b4b;
 }
 * { box-sizing: border-box; }
 body {
@@ -36,7 +37,7 @@ body {
   font-size: 17px;
   padding: 28px 20px 80px;
 }
-.masthead { text-align: center; max-width: 1100px; margin: 0 auto 30px; }
+.masthead { text-align: center; max-width: 1100px; margin: 0 auto 26px; }
 .masthead h1 {
   font-family: 'Cinzel', serif;
   font-weight: 700;
@@ -59,6 +60,34 @@ body {
   margin: 0 0 14px;
 }
 
+/* ----- Campaign band ----- */
+.campaign {
+  max-width: 1100px; margin: 0 auto 28px;
+  border: 1px solid var(--line); background: var(--panel);
+  padding: 18px;
+}
+.campaign-grid { display: grid; grid-template-columns: 320px 1fr; gap: 26px; }
+@media (max-width: 920px) { .campaign-grid { grid-template-columns: 1fr; } }
+.stage-label { font-size: 16px; margin: 10px 0 4px; }
+.stage-label strong { color: var(--gold-bright); font-weight: 600; }
+.stage-pen { color: var(--danger); font-variant-numeric: tabular-nums; }
+input[type=range] {
+  width: 100%; accent-color: var(--gold); background: transparent; margin: 8px 0 0;
+}
+.fineprint { color: var(--dim); font-size: 13.5px; font-style: italic; line-height: 1.45; margin: 10px 0 0; }
+
+.bonus-act {
+  font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--dim); margin: 12px 0 4px;
+}
+.bonus-act:first-child { margin-top: 0; }
+.bonus { display: flex; align-items: baseline; gap: 9px; padding: 3px 0; font-size: 15.5px; flex-wrap: wrap; }
+.bonus input[type=checkbox] { accent-color: var(--gold); width: 15px; height: 15px; transform: translateY(2px); }
+.bonus .effect { color: var(--gold-bright); }
+.bonus .src { color: var(--dim); }
+.bonus select { width: auto; font-size: 14px; padding: 3px 6px; }
+.custom-row { display: grid; grid-template-columns: 1fr 100px; gap: 8px; margin-top: 8px; max-width: 420px; }
+
 /* ----- Slots ----- */
 .slot { border: 1px solid var(--line); background: var(--panel); margin-bottom: 8px; }
 .slot.open { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(201,163,95,0.18), 0 6px 18px rgba(0,0,0,0.45); }
@@ -74,7 +103,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
 .slot-body { padding: 4px 14px 14px; border-top: 1px solid var(--line); }
 .mod-row { display: grid; grid-template-columns: 1fr 110px 30px; gap: 8px; margin-top: 10px; align-items: center; }
-select, input {
+select, input[type=number] {
   background: var(--panel2); border: 1px solid var(--line); color: var(--ink);
   font: inherit; font-size: 15px; padding: 7px 9px; width: 100%;
 }
@@ -140,11 +169,13 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .combat-table td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--gold-bright); white-space: nowrap; }
 .empty { color: var(--dim); font-style: italic; font-size: 15px; margin: 4px 0; }
 
+.pen-line { color: var(--danger); font-size: 14px; font-style: italic; margin: -4px 0 10px; }
 .res { margin-bottom: 12px; }
 .res-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
 .res-label { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
 .res-num { font-variant-numeric: tabular-nums; font-size: 16px; }
 .res-num em { font-style: italic; font-size: 13px; opacity: 0.75; }
+.res-num.neg { color: var(--danger) !important; }
 .bar { height: 7px; background: var(--panel2); border: 1px solid var(--line); }
 .fill { height: 100%; transition: width 240ms ease; }
 @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
@@ -170,6 +201,26 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   <div class="rule"></div>
   <p class="save-state" id="saveState">Entries are saved automatically in this browser.</p>
 </header>
+
+<section class="campaign">
+  <h2 class="col-title">Campaign</h2>
+  <div class="campaign-grid">
+    <div>
+      <h3 class="bonus-act">Progress &amp; Resistance Penalty</h3>
+      <input type="range" id="stageSlider" min="0" max="6" step="1" value="0" aria-label="Campaign progress stage">
+      <p class="stage-label"><strong id="stageName"></strong><br><span class="stage-pen" id="stagePen"></span></p>
+      <p class="fineprint">Each act completed applies −10% to Fire, Cold and Lightning resistance, reaching −60% by endgame. Chaos resistance is unaffected. Stage-to-penalty mapping is approximate for the late steps — the banner shown in game when you enter a new area, or your character sheet, is the authority.</p>
+    </div>
+    <div>
+      <h3 class="bonus-act" style="margin-top:0">Permanent Bonuses Checklist</h3>
+      <div id="bonusList"></div>
+      <h3 class="bonus-act">Other / Newer-Patch Bonuses</h3>
+      <p class="fineprint" style="margin:0 0 4px">For rewards from later acts or future patches not listed above.</p>
+      <div id="customBonuses"></div>
+      <p class="fineprint">Curated list reflects patch 0.5.0 sources; values can shift between patches.</p>
+    </div>
+  </div>
+</section>
 
 <div class="columns">
   <section class="gear-col">
@@ -202,7 +253,9 @@ const STATS = [
   { key: "int", label: "Intelligence", cat: "base", suffix: "" },
   { key: "allAttr", label: "All Attributes", cat: "base", suffix: "" },
   { key: "life", label: "Maximum Life", cat: "combat", suffix: "" },
+  { key: "lifePct", label: "Increased Maximum Life", cat: "combat", suffix: "%" },
   { key: "mana", label: "Maximum Mana", cat: "combat", suffix: "" },
+  { key: "manaPct", label: "Increased Maximum Mana", cat: "combat", suffix: "%" },
   { key: "spirit", label: "Spirit", cat: "combat", suffix: "" },
   { key: "accuracy", label: "Accuracy Rating", cat: "combat", suffix: "" },
   { key: "physDmg", label: "Increased Physical Damage", cat: "combat", suffix: "%" },
@@ -213,6 +266,12 @@ const STATS = [
   { key: "critChance", label: "Increased Critical Hit Chance", cat: "combat", suffix: "%" },
   { key: "critBonus", label: "Increased Critical Damage Bonus", cat: "combat", suffix: "%" },
   { key: "moveSpeed", label: "Increased Movement Speed", cat: "combat", suffix: "%" },
+  { key: "manaRegen", label: "Increased Mana Regeneration", cat: "combat", suffix: "%" },
+  { key: "stunThresh", label: "Increased Stun Threshold", cat: "combat", suffix: "%" },
+  { key: "ailmentThresh", label: "Increased Elemental Ailment Threshold", cat: "combat", suffix: "%" },
+  { key: "charmCharges", label: "Increased Charm Charges Gained", cat: "combat", suffix: "%" },
+  { key: "flaskMana", label: "Increased Mana Recovery from Flasks", cat: "combat", suffix: "%" },
+  { key: "flaskLife", label: "Increased Life Recovery from Flasks", cat: "combat", suffix: "%" },
   { key: "lvlAll", label: "+ Level of All Skills", cat: "combat", suffix: "" },
   { key: "lvlMelee", label: "+ Level of Melee Skills", cat: "combat", suffix: "" },
   { key: "lvlProj", label: "+ Level of Projectile Skills", cat: "combat", suffix: "" },
@@ -242,6 +301,38 @@ const ALL_SLOTS = [...SHARED_SLOTS, ...SET1_SLOTS, ...SET2_SLOTS];
 const RES_CAP = 75;
 const STORE_KEY = "poe2GearLedger.v1";
 
+/* ---------- Campaign data ---------- */
+const STAGES = [
+  { name: "Campaign start", pen: 0 },
+  { name: "Act I complete", pen: 10 },
+  { name: "Act II complete", pen: 20 },
+  { name: "Act III complete", pen: 30 },
+  { name: "Act IV complete", pen: 40 },
+  { name: "Interludes (late campaign)", pen: 50 },
+  { name: "Endgame", pen: 60 },
+];
+
+const BONUSES = [
+  { id: "beira", act: "Act I", name: "Beira of the Rotten Pack", effect: "+10% Cold Resistance", apply: { coldRes: 10 } },
+  { id: "candlemass", act: "Act I", name: "Candlemass, the Living Rite", effect: "+20 Maximum Life", apply: { life: 20 } },
+  { id: "king", act: "Act I", name: "The King in the Mist (Freythorn rituals)", effect: "+30 Spirit", apply: { spirit: 30 } },
+  { id: "garukhan", act: "Act II", name: "Sisters of Garukhan shrine", effect: "+10% Lightning Resistance", apply: { lightRes: 10 } },
+  { id: "titan", act: "Act II", name: "Titan altar (Kabala + Sun Clan relics)", choice: [
+    { id: "charm", label: "30% increased Charm Charges gained", apply: { charmCharges: 30 } },
+    { id: "flask", label: "15% increased Mana Recovery from Flasks", apply: { flaskMana: 15 } },
+  ]},
+  { id: "blackjaw", act: "Act III", name: "Blackjaw, the Remnant", effect: "+10% Fire Resistance", apply: { fireRes: 10 } },
+  { id: "ignagduk", act: "Act III", name: "Ignagduk, the Bog Witch", effect: "+30 Spirit", apply: { spirit: 30 } },
+  { id: "venom", act: "Act III", name: "Venom Draught (Servi — choice is permanent!)", choice: [
+    { id: "stun", label: "25% increased Stun Threshold", apply: { stunThresh: 25 } },
+    { id: "ailment", label: "30% increased Elemental Ailment Threshold", apply: { ailmentThresh: 30 } },
+    { id: "regen", label: "25% increased Mana Regeneration Rate", apply: { manaRegen: 25 } },
+  ]},
+  { id: "lythara", act: "Interludes", name: "Lythara, the Wayward Spear (Kriar Village)", effect: "+40 Spirit", apply: { spirit: 40 } },
+];
+const BONUS_MAP = Object.fromEntries(BONUSES.map(b => [b.id, b]));
+const CUSTOM_COUNT = 4;
+
 /* ---------- State ---------- */
 let uid = 0;
 const newRow = () => ({ id: ++uid, stat: "", value: "" });
@@ -250,6 +341,12 @@ let state = {
   gear: Object.fromEntries(ALL_SLOTS.map(s => [s.id, [newRow()]])),
   activeSet: 1,
   openSlot: "helmet",
+  campaign: {
+    stage: 0,
+    bonuses: {},                       // { bonusId: true }
+    choices: { titan: "charm", venom: "stun" },
+    custom: Array.from({ length: CUSTOM_COUNT }, () => ({ stat: "", value: "" })),
+  },
 };
 
 function load() {
@@ -258,7 +355,6 @@ function load() {
     if (!raw) return;
     const saved = JSON.parse(raw);
     if (saved && saved.gear) {
-      // Re-assign ids and keep only known slots/stats so old saves stay compatible
       const gear = {};
       for (const slot of ALL_SLOTS) {
         const rows = Array.isArray(saved.gear[slot.id]) ? saved.gear[slot.id] : [];
@@ -271,8 +367,27 @@ function load() {
       state.activeSet = saved.activeSet === 2 ? 2 : 1;
       state.openSlot = typeof saved.openSlot === "string" ? saved.openSlot : "helmet";
     }
+    if (saved && saved.campaign) {
+      const c = saved.campaign;
+      state.campaign.stage = Number.isInteger(c.stage) && c.stage >= 0 && c.stage < STAGES.length ? c.stage : 0;
+      if (c.bonuses && typeof c.bonuses === "object") {
+        for (const id of Object.keys(c.bonuses)) if (BONUS_MAP[id] && c.bonuses[id]) state.campaign.bonuses[id] = true;
+      }
+      if (c.choices && typeof c.choices === "object") {
+        for (const bid of ["titan", "venom"]) {
+          const b = BONUS_MAP[bid];
+          if (b && b.choice.some(ch => ch.id === c.choices[bid])) state.campaign.choices[bid] = c.choices[bid];
+        }
+      }
+      if (Array.isArray(c.custom)) {
+        for (let i = 0; i < CUSTOM_COUNT; i++) {
+          const r = c.custom[i];
+          if (r && (r.stat === "" || STAT_MAP[r.stat])) state.campaign.custom[i] = { stat: r.stat || "", value: r.value ?? "" };
+        }
+      }
+    }
   } catch (e) {
-    console.warn("Could not load saved gear:", e);
+    console.warn("Could not load saved data:", e);
   }
 }
 
@@ -285,6 +400,7 @@ function save() {
         gear: state.gear,
         activeSet: state.activeSet,
         openSlot: state.openSlot,
+        campaign: state.campaign,
       }));
       flashSaved();
     } catch (e) {
@@ -316,20 +432,43 @@ function computeTotals() {
   const weaponIds = state.activeSet === 1 ? ["main1", "off1"] : ["main2", "off2"];
   const activeIds = [...SHARED_SLOTS.map(s => s.id), ...weaponIds];
   const t = Object.fromEntries(STATS.map(s => [s.key, 0]));
+
+  // Gear
   for (const id of activeIds) {
     for (const row of state.gear[id]) {
       const v = parseFloat(row.value);
       if (row.stat && !isNaN(v)) t[row.stat] += v;
     }
   }
+  // Campaign bonuses (checked)
+  for (const b of BONUSES) {
+    if (!state.campaign.bonuses[b.id]) continue;
+    const apply = b.choice
+      ? b.choice.find(ch => ch.id === state.campaign.choices[b.id])?.apply
+      : b.apply;
+    if (apply) for (const k of Object.keys(apply)) t[k] += apply[k];
+  }
+  // Custom campaign rows
+  for (const r of state.campaign.custom) {
+    const v = parseFloat(r.value);
+    if (r.stat && !isNaN(v)) t[r.stat] += v;
+  }
+
+  const pen = STAGES[state.campaign.stage].pen;
   return {
     raw: t,
+    pen,
     base: { str: t.str + t.allAttr, dex: t.dex + t.allAttr, int: t.int + t.allAttr },
-    res: { fire: t.fireRes + t.allRes, cold: t.coldRes + t.allRes, light: t.lightRes + t.allRes, chaos: t.chaosRes },
+    res: {
+      fire: t.fireRes + t.allRes - pen,
+      cold: t.coldRes + t.allRes - pen,
+      light: t.lightRes + t.allRes - pen,
+      chaos: t.chaosRes, // campaign penalty does not apply to chaos
+    },
   };
 }
 
-/* ---------- Rendering: gear column ---------- */
+/* ---------- Rendering: campaign panel ---------- */
 function statOptions(selected) {
   const group = (label, cat) =>
     `<optgroup label="${label}">` +
@@ -341,6 +480,45 @@ function statOptions(selected) {
     group("Base Stats", "base") + group("Combat Stats", "combat") + group("Resistances", "res");
 }
 
+function renderStage() {
+  const st = STAGES[state.campaign.stage];
+  document.getElementById("stageSlider").value = state.campaign.stage;
+  document.getElementById("stageName").textContent = st.name;
+  document.getElementById("stagePen").textContent =
+    st.pen === 0 ? "No resistance penalty" : `−${st.pen}% to Fire, Cold and Lightning resistance`;
+}
+
+function renderBonuses() {
+  let html = "";
+  let lastAct = null;
+  for (const b of BONUSES) {
+    if (b.act !== lastAct) { html += `<h3 class="bonus-act">${esc(b.act)}</h3>`; lastAct = b.act; }
+    const checked = state.campaign.bonuses[b.id] ? "checked" : "";
+    if (b.choice) {
+      const sel = state.campaign.choices[b.id];
+      html += `<label class="bonus"><input type="checkbox" data-bonus="${b.id}" ${checked}>
+        <span class="src">${esc(b.name)}:</span>
+        <select data-choice="${b.id}" aria-label="Reward choice for ${esc(b.name)}">` +
+        b.choice.map(ch => `<option value="${ch.id}" ${ch.id === sel ? "selected" : ""}>${esc(ch.label)}</option>`).join("") +
+        `</select></label>`;
+    } else {
+      html += `<label class="bonus"><input type="checkbox" data-bonus="${b.id}" ${checked}>
+        <span class="src">${esc(b.name)}</span> <span class="effect">${esc(b.effect)}</span></label>`;
+    }
+  }
+  document.getElementById("bonusList").innerHTML = html;
+
+  document.getElementById("customBonuses").innerHTML = state.campaign.custom.map((r, i) => `
+    <div class="custom-row" data-custom="${i}">
+      <select aria-label="Custom bonus stat" data-act="cstat">${statOptions(r.stat)}</select>
+      <div class="val-wrap">
+        <input type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Custom bonus value" data-act="cvalue" value="${esc(r.value)}">
+        <span class="suffix">${r.stat ? STAT_MAP[r.stat].suffix : ""}</span>
+      </div>
+    </div>`).join("");
+}
+
+/* ---------- Rendering: gear column ---------- */
 function slotCardHTML(slot) {
   const open = state.openSlot === slot.id;
   const n = filledCount(slot.id);
@@ -394,10 +572,11 @@ function resBarHTML(label, tone, value) {
   const note = over > 0
     ? `<em> (+${round(over)} over)</em>`
     : `<em> (${round(RES_CAP - value)} to cap)</em>`;
+  const negClass = value < 0 ? " neg" : "";
   return `<div class="res ${tone}">
     <div class="res-top">
       <span class="res-label">${label}</span>
-      <span class="res-num">${round(Math.min(value, RES_CAP))}%${note}</span>
+      <span class="res-num${negClass}">${round(Math.min(value, RES_CAP))}%${note}</span>
     </div>
     <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
   </div>`;
@@ -407,11 +586,14 @@ function renderTotals() {
   const t = computeTotals();
   const combatRows = STATS.filter(s => s.cat === "combat" && t.raw[s.key] !== 0);
   const combat = combatRows.length === 0
-    ? `<p class="empty">No combat stats entered yet. Add modifiers to your gear and they will be tallied here.</p>`
+    ? `<p class="empty">No combat stats entered yet. Add gear modifiers or tick campaign bonuses and they will be tallied here.</p>`
     : `<table class="combat-table"><tbody>` +
       combatRows.map(s =>
         `<tr><td>${esc(s.label)}</td><td class="num">${s.key.startsWith("lvl") ? "+" : ""}${round(t.raw[s.key])}${s.suffix}</td></tr>`
       ).join("") + `</tbody></table>`;
+
+  const penLine = t.pen > 0
+    ? `<p class="pen-line">Campaign penalty: −${t.pen}% elemental (chaos unaffected)</p>` : "";
 
   document.getElementById("totals").innerHTML = `
     <h3 class="sect">Base Stats</h3>
@@ -422,24 +604,25 @@ function renderTotals() {
     </div>
     <h3 class="sect">Combat Stats</h3>${combat}
     <h3 class="sect">Resistances</h3>
+    ${penLine}
     ${resBarHTML("Fire", "fire", t.res.fire)}
     ${resBarHTML("Cold", "cold", t.res.cold)}
     ${resBarHTML("Lightning", "light", t.res.light)}
     ${resBarHTML("Chaos", "chaos", t.res.chaos)}
-    <p class="cap-note">Cap shown at ${RES_CAP}%. Anything beyond is overcap — a buffer against curses and exposure, not extra mitigation.</p>`;
+    <p class="cap-note">Cap shown at ${RES_CAP}%. Anything beyond is overcap — a buffer against curses, exposure and the next act's penalty, not extra mitigation.</p>`;
 
   document.querySelectorAll("#setToggle button").forEach(b =>
     b.classList.toggle("on", Number(b.dataset.set) === state.activeSet));
 }
 
-/* ---------- Events ---------- */
+/* ---------- Events: gear ---------- */
 const gearCol = document.getElementById("gearCol");
 
 gearCol.addEventListener("click", e => {
   const btn = e.target.closest("[data-act]");
   if (!btn) return;
   const act = btn.dataset.act;
-  if (act === "stat" || act === "value") return; // handled on input/change
+  if (act === "stat" || act === "value") return;
   const slotEl = btn.closest("[data-slot]");
   const slotId = slotEl.dataset.slot;
   const rowEl = btn.closest("[data-row]");
@@ -460,7 +643,6 @@ gearCol.addEventListener("click", e => {
   renderTotals();
 });
 
-// Value typing: update state and totals without re-rendering inputs (keeps focus)
 gearCol.addEventListener("input", e => {
   const el = e.target.closest("[data-act='value']");
   if (!el) return;
@@ -470,7 +652,6 @@ gearCol.addEventListener("input", e => {
   if (row) { row.value = el.value; save(); renderTotals(); updateMeta(slotId); }
 });
 
-// Stat selection: update state, suffix, totals
 gearCol.addEventListener("change", e => {
   const el = e.target.closest("[data-act='stat']");
   if (!el) return;
@@ -492,6 +673,46 @@ function updateMeta(slotId) {
   slotEl.querySelector(".slot-meta").textContent = n > 0 ? `${n} mod${n > 1 ? "s" : ""}` : "empty";
 }
 
+/* ---------- Events: campaign ---------- */
+document.getElementById("stageSlider").addEventListener("input", e => {
+  state.campaign.stage = Number(e.target.value);
+  save(); renderStage(); renderTotals();
+});
+
+document.getElementById("bonusList").addEventListener("change", e => {
+  const cb = e.target.closest("input[data-bonus]");
+  if (cb) {
+    if (cb.checked) state.campaign.bonuses[cb.dataset.bonus] = true;
+    else delete state.campaign.bonuses[cb.dataset.bonus];
+    save(); renderTotals();
+    return;
+  }
+  const sel = e.target.closest("select[data-choice]");
+  if (sel) {
+    state.campaign.choices[sel.dataset.choice] = sel.value;
+    save(); renderTotals();
+  }
+});
+
+const customEl = document.getElementById("customBonuses");
+customEl.addEventListener("change", e => {
+  const sel = e.target.closest("[data-act='cstat']");
+  if (!sel) return;
+  const i = Number(sel.closest("[data-custom]").dataset.custom);
+  state.campaign.custom[i].stat = sel.value;
+  sel.closest("[data-custom]").querySelector(".suffix").textContent =
+    sel.value ? STAT_MAP[sel.value].suffix : "";
+  save(); renderTotals();
+});
+customEl.addEventListener("input", e => {
+  const inp = e.target.closest("[data-act='cvalue']");
+  if (!inp) return;
+  const i = Number(inp.closest("[data-custom]").dataset.custom);
+  state.campaign.custom[i].value = inp.value;
+  save(); renderTotals();
+});
+
+/* ---------- Events: panel ---------- */
 document.getElementById("setToggle").addEventListener("click", e => {
   const btn = e.target.closest("button[data-set]");
   if (!btn) return;
@@ -502,15 +723,25 @@ document.getElementById("setToggle").addEventListener("click", e => {
 });
 
 document.getElementById("resetAll").addEventListener("click", () => {
-  if (!confirm("Reset all gear entries? This cannot be undone.")) return;
+  if (!confirm("Reset all gear and campaign entries? This cannot be undone.")) return;
   state.gear = Object.fromEntries(ALL_SLOTS.map(s => [s.id, [newRow()]]));
+  state.campaign = {
+    stage: 0,
+    bonuses: {},
+    choices: { titan: "charm", venom: "stun" },
+    custom: Array.from({ length: CUSTOM_COUNT }, () => ({ stat: "", value: "" })),
+  };
   save();
+  renderStage();
+  renderBonuses();
   renderGear();
   renderTotals();
 });
 
 /* ---------- Init ---------- */
 load();
+renderStage();
+renderBonuses();
 renderGear();
 renderTotals();
 </script>
