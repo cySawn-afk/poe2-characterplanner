@@ -62,7 +62,7 @@ body {
 
 /* ----- Campaign band ----- */
 .campaign {
-  max-width: 1100px; margin: 0 auto 28px;
+  max-width: 1100px; margin: 28px auto 0;
   border: 1px solid var(--line); background: var(--panel);
   padding: 18px;
 }
@@ -202,26 +202,6 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   <p class="save-state" id="saveState">Entries are saved automatically in this browser.</p>
 </header>
 
-<section class="campaign">
-  <h2 class="col-title">Campaign</h2>
-  <div class="campaign-grid">
-    <div>
-      <h3 class="bonus-act">Progress &amp; Resistance Penalty</h3>
-      <input type="range" id="stageSlider" min="0" max="6" step="1" value="0" aria-label="Campaign progress stage">
-      <p class="stage-label"><strong id="stageName"></strong><br><span class="stage-pen" id="stagePen"></span></p>
-      <p class="fineprint">Each act completed applies −10% to Fire, Cold and Lightning resistance, reaching −60% by endgame. Chaos resistance is unaffected. Stage-to-penalty mapping is approximate for the late steps — the banner shown in game when you enter a new area, or your character sheet, is the authority.</p>
-    </div>
-    <div>
-      <h3 class="bonus-act" style="margin-top:0">Permanent Bonuses Checklist</h3>
-      <div id="bonusList"></div>
-      <h3 class="bonus-act">Other / Newer-Patch Bonuses</h3>
-      <p class="fineprint" style="margin:0 0 4px">For rewards from later acts or future patches not listed above.</p>
-      <div id="customBonuses"></div>
-      <p class="fineprint">Curated list reflects patch 0.5.0 sources; values can shift between patches.</p>
-    </div>
-  </div>
-</section>
-
 <div class="columns">
   <section class="gear-col">
     <h2 class="col-title">Equipment</h2>
@@ -242,6 +222,26 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     </div>
   </section>
 </div>
+
+<section class="campaign">
+  <h2 class="col-title">Campaign</h2>
+  <div class="campaign-grid">
+    <div>
+      <h3 class="bonus-act">Progress &amp; Resistance Penalty</h3>
+      <input type="range" id="stageSlider" min="0" max="6" step="1" value="0" aria-label="Campaign progress stage">
+      <p class="stage-label"><strong id="stageName"></strong><br><span class="stage-pen" id="stagePen"></span></p>
+      <p class="fineprint">Each act completed applies −10% to Fire, Cold and Lightning resistance, reaching −60% by endgame. Chaos resistance is unaffected. Stage-to-penalty mapping is approximate for the late steps — the banner shown in game when you enter a new area, or your character sheet, is the authority.</p>
+    </div>
+    <div>
+      <h3 class="bonus-act" style="margin-top:0">Permanent Bonuses Checklist</h3>
+      <div id="bonusList"></div>
+      <h3 class="bonus-act">Other / Newer-Patch Bonuses</h3>
+      <p class="fineprint" style="margin:0 0 4px">For rewards from later acts or future patches not listed above.</p>
+      <div id="customBonuses"></div>
+      <p class="fineprint">Curated list reflects patch 0.5.0 sources; values can shift between patches.</p>
+    </div>
+  </div>
+</section>
 
 <script>
 "use strict";
@@ -270,6 +270,12 @@ const STATS = [
   { key: "stunThresh", label: "Increased Stun Threshold", cat: "combat", suffix: "%" },
   { key: "ailmentThresh", label: "Increased Elemental Ailment Threshold", cat: "combat", suffix: "%" },
   { key: "charmCharges", label: "Increased Charm Charges Gained", cat: "combat", suffix: "%" },
+  { key: "charmDuration", label: "Increased Charm Duration", cat: "combat", suffix: "%" },
+  { key: "cooldownRate", label: "Increased Cooldown Recovery Rate", cat: "combat", suffix: "%" },
+  { key: "presenceAoE", label: "Increased Presence Area of Effect", cat: "combat", suffix: "%" },
+  { key: "globalDef", label: "Increased Global Defences", cat: "combat", suffix: "%" },
+  { key: "expGain", label: "Increased Experience Gain", cat: "combat", suffix: "%" },
+  { key: "attrPct", label: "Increased All Attributes", cat: "combat", suffix: "%" },
   { key: "flaskMana", label: "Increased Mana Recovery from Flasks", cat: "combat", suffix: "%" },
   { key: "flaskLife", label: "Increased Life Recovery from Flasks", cat: "combat", suffix: "%" },
   { key: "lvlAll", label: "+ Level of All Skills", cat: "combat", suffix: "" },
@@ -319,7 +325,7 @@ const BONUSES = [
   { id: "garukhan", act: "Act II", name: "Sisters of Garukhan shrine", effect: "+10% Lightning Resistance", apply: { lightRes: 10 } },
   { id: "titan", act: "Act II", name: "Titan altar (Kabala + Sun Clan relics)", choice: [
     { id: "charm", label: "30% increased Charm Charges gained", apply: { charmCharges: 30 } },
-    { id: "flask", label: "15% increased Mana Recovery from Flasks", apply: { flaskMana: 15 } },
+    { id: "charmdur", label: "30% increased Charm Duration", apply: { charmDuration: 30 } },
   ]},
   { id: "blackjaw", act: "Act III", name: "Blackjaw, the Remnant", effect: "+10% Fire Resistance", apply: { fireRes: 10 } },
   { id: "ignagduk", act: "Act III", name: "Ignagduk, the Bog Witch", effect: "+30 Spirit", apply: { spirit: 30 } },
@@ -327,6 +333,16 @@ const BONUSES = [
     { id: "stun", label: "25% increased Stun Threshold", apply: { stunThresh: 25 } },
     { id: "ailment", label: "30% increased Elemental Ailment Threshold", apply: { ailmentThresh: 30 } },
     { id: "regen", label: "25% increased Mana Regeneration Rate", apply: { manaRegen: 25 } },
+  ]},
+  { id: "molten", act: "Interludes", name: "Molten One's Gift (Skullmaw Stairway shrine)", effect: "+5% increased Maximum Life", apply: { lifePct: 5 } },
+  { id: "pillars", act: "Interludes", name: "Seven Pillars of Qimah (swappable)", choice: [
+    { id: "kochai", label: "Kochai's Boon — +5 to All Attributes", apply: { allAttr: 5 } },
+    { id: "halani", label: "Halani's Boon — 12% increased Cooldown Recovery Rate", apply: { cooldownRate: 12 } },
+    { id: "galai", label: "Galai's Boon — 20% increased Presence Area of Effect", apply: { presenceAoE: 20 } },
+    { id: "ahkeli", label: "Ahkeli's Boon — 15% increased Global Defences", apply: { globalDef: 15 } },
+    { id: "orbala", label: "Orbala's Boon — 3% increased Movement Speed", apply: { moveSpeed: 3 } },
+    { id: "tabana", label: "Tabana's Boon — +5% to Elemental Resistances", apply: { allRes: 5 } },
+    { id: "alima", label: "Alima's Disgrace — 5% increased Experience Gain, all other boons inverted", apply: { expGain: 5, allRes: -5, moveSpeed: -3, globalDef: -15, presenceAoE: -20, cooldownRate: -12, attrPct: -5 } },
   ]},
   { id: "lythara", act: "Interludes", name: "Lythara, the Wayward Spear (Kriar Village)", effect: "+40 Spirit", apply: { spirit: 40 } },
 ];
@@ -344,7 +360,7 @@ let state = {
   campaign: {
     stage: 0,
     bonuses: {},                       // { bonusId: true }
-    choices: { titan: "charm", venom: "stun" },
+    choices: { titan: "charm", venom: "stun", pillars: "kochai" },
     custom: Array.from({ length: CUSTOM_COUNT }, () => ({ stat: "", value: "" })),
   },
 };
@@ -374,9 +390,8 @@ function load() {
         for (const id of Object.keys(c.bonuses)) if (BONUS_MAP[id] && c.bonuses[id]) state.campaign.bonuses[id] = true;
       }
       if (c.choices && typeof c.choices === "object") {
-        for (const bid of ["titan", "venom"]) {
-          const b = BONUS_MAP[bid];
-          if (b && b.choice.some(ch => ch.id === c.choices[bid])) state.campaign.choices[bid] = c.choices[bid];
+        for (const b of BONUSES.filter(x => x.choice)) {
+          if (b.choice.some(ch => ch.id === c.choices[b.id])) state.campaign.choices[b.id] = c.choices[b.id];
         }
       }
       if (Array.isArray(c.custom)) {
@@ -728,7 +743,7 @@ document.getElementById("resetAll").addEventListener("click", () => {
   state.campaign = {
     stage: 0,
     bonuses: {},
-    choices: { titan: "charm", venom: "stun" },
+    choices: { titan: "charm", venom: "stun", pillars: "kochai" },
     custom: Array.from({ length: CUSTOM_COUNT }, () => ({ stat: "", value: "" })),
   };
   save();
